@@ -73,7 +73,7 @@ function renderHtml(url: string, title: string, content: string) {
         <style>
           body{margin:40px auto;max-width:650px;line-height:1.6;font-size:18px;color:#444;padding:0 10px}
           h1,h2,h3{line-height:1.2}
-          img{width:100%;}
+          img{width:100%;height:auto;}
           pre{padding:1em;overflow-x:auto}
         </style>
     </head>
