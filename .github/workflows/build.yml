@@ -1,0 +1,20 @@
+name: build
+on:
+  push:
+    branches:
+      - master
+env:
+  PROJECT_NAME: r3ad
+  DEPLOY_CTL_VERSION: 1.10.3
+  DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: 1.39.2
+      - name: deploy
+        run: |
+          deno install --allow-all --no-check https://deno.land/x/deploy@$DEPLOY_CTL_VERSION/deployctl.ts
+          deployctl deploy --project="$PROJECT_NAME" --prod main.ts
