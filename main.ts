@@ -1,6 +1,6 @@
 import { Router } from './router.ts';
-import { DOMParser } from "deno-dom";
 import { Readability } from './lib/Readability.js';
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.45/deno-dom-wasm.ts";
 
 const SERVER_PORT = Deno.env.get('SERVER_PORT') ?? 8000;
 const IGNORES = ['favicon.ico'];
