@@ -11,12 +11,11 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-22.04
     steps:
+      - uses: actions/checkout@v3
       - uses: denoland/setup-deno@v1
         with:
           deno-version: 1.39.2
       - name: deploy
         run: |
-          ls
-          pwd
-          cd ..
-          ls
+          deno install --allow-all --no-check https://deno.land/x/deploy@$DEPLOY_CTL_VERSION/deployctl.ts
+          deployctl deploy --project="$PROJECT_NAME" --prod --entrypoint=main.ts
