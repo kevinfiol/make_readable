@@ -17,4 +17,4 @@ jobs:
       - name: deploy
         run: |
           deno install --allow-all --no-check https://deno.land/x/deploy@$DEPLOY_CTL_VERSION/deployctl.ts
-          deployctl deploy --project="$PROJECT_NAME" --prod ./main.ts
+          deployctl deploy --project="$PROJECT_NAME" --prod main.ts
