@@ -9,8 +9,8 @@ interface Page {
 const TTL = 12 * 36e5; // 12 hrs
 const PAGE = (id: string) => ['pages', id];
 
-export async function Cache(path: string) {
-  const KV = await Deno.openKv(path);
+export async function Cache() {
+  const KV = await Deno.openKv();
 
   return {
     async get(hash: string) {

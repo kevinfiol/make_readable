@@ -7,7 +7,7 @@ import { Cache } from "./cache.ts";
 const SERVER_PORT = Deno.env.get('SERVER_PORT') ?? 8000;
 const IGNORES = ['favicon.ico'];
 const ENCODER = new TextEncoder();
-const CACHE = await Cache('db/store');
+const CACHE = await Cache();
 
 const app = new Router();
 
@@ -26,7 +26,6 @@ app.get('*', async (req) => {
       const page = cached.data;
       contents = renderHtml(url, page.title, page.content, page.timestamp);
     } else {
-      console.log('not cached');
       // catch doesn't exist or inaccesible; fetch document;
       try {
         const { data: pageContent, error } = await fetchDocument(url);
@@ -65,8 +64,6 @@ async function fetchDocument(url: string) {
     if (!res.ok) throw Error(res.statusText);
     data = await res.text();
   } catch (e) {
-    console.log('Unable to fetch document at: ', url);
-    console.error(e);
     error = e;
   }
 
