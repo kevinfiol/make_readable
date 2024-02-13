@@ -1,9 +1,13 @@
 import { Router } from './router.ts';
 import { Readability } from './lib/Readability.js';
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.45/deno-dom-wasm.ts";
+import { encodeHex } from "https://deno.land/std@0.207.0/encoding/hex.ts";
+import { Cache } from "./cache.ts";
 
 const SERVER_PORT = Deno.env.get('SERVER_PORT') ?? 8000;
 const IGNORES = ['favicon.ico'];
+const ENCODER = new TextEncoder();
+const CACHE = await Cache('db/store');
 
 const app = new Router();
 
@@ -15,21 +19,29 @@ app.get('*', async (req) => {
   const url = requestUrl.pathname.slice(1);
 
   if (url && !IGNORES.includes(url)) {
-    const { data: pageContent, error } = await fetchDocument(url);
+    const hashedUrl = await getHash(url);
+    const cached = await CACHE.get(hashedUrl);
 
-    if (error) {
-      status = 500;
-      contents = 'Unable to fetch page';
+    if (!cached.error) {
+      const page = cached.data;
+      contents = renderHtml(url, page.title, page.content, page.timestamp);
     } else {
+      console.log('not cached');
+      // catch doesn't exist or inaccesible; fetch document;
       try {
+        const { data: pageContent, error } = await fetchDocument(url);
+        if (error) throw error;
+
         const doc = new DOMParser().parseFromString(pageContent, "text/html");
         const reader = new Readability(doc, {});
         const parsed = reader.parse();
+
         contents = renderHtml(url, parsed!.title, parsed!.content);
+        CACHE.set(hashedUrl, parsed!.title, parsed!.content);
       } catch (e) {
         console.error(e);
         status = 500;
-        contents = 'Unable to parse page';
+        contents = 'Unable to fetch page';
       }
     }
   }
@@ -61,7 +73,7 @@ async function fetchDocument(url: string) {
   return { data, error };
 }
 
-function renderHtml(url: string, title: string, content: string) {
+function renderHtml(url: string, title: string, content: string, timestamp?: number) {
   return `
     <!DOCTYPE html>
     <html>
@@ -79,6 +91,9 @@ function renderHtml(url: string, title: string, content: string) {
     </head>
     <body>
       <header>
+        ${timestamp ? `
+          <div><small>Cached on ${(new Date(timestamp)).toUTCString()}</small></div>
+        ` : ''}
         <small><a href="${url}">Link to original content</a></small>
         <h1>${title}</h1>
       </header>
@@ -86,6 +101,11 @@ function renderHtml(url: string, title: string, content: string) {
     </body>
     </html>
   `;
+}
+
+async function getHash(url: string) {
+  const buffer = await crypto.subtle.digest('SHA-256', ENCODER.encode(url));
+  return encodeHex(buffer);
 }
 
 Deno.serve({ port: Number(SERVER_PORT) }, app.handler.bind(app));

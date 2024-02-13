@@ -1,0 +1,3 @@
+db/store
+db/store-shm
+db/store-wal
