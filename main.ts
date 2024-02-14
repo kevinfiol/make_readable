@@ -19,6 +19,8 @@ app.get('*', async (req) => {
   const url = requestUrl.pathname.slice(1);
 
   if (url && !IGNORES.includes(url)) {
+    const pageUrl = new URL(url);
+    const fallbackURI = pageUrl.origin + pageUrl.pathname;
     const hashedUrl = await getHash(url);
     const cached = await CACHE.get(hashedUrl);
 
@@ -31,8 +33,11 @@ app.get('*', async (req) => {
         const { data: pageContent, error } = await fetchDocument(url);
         if (error) throw error;
 
+        // get baseURI and documentURI from fetchDocument and attach to doc?
         const doc = new DOMParser().parseFromString(pageContent, "text/html");
-        const reader = new Readability(doc, {});
+        if (doc === null) throw Error('Unable to parse page content');
+
+        const reader = new Readability(doc, { fallbackURI });
         const parsed = reader.parse();
 
         contents = renderHtml(url, parsed!.title, parsed!.content);
