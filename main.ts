@@ -19,16 +19,16 @@ app.get('*', async (req) => {
   const url = requestUrl.pathname.slice(1);
 
   if (url && !IGNORES.includes(url)) {
-    const pageUrl = new URL(url);
-    const fallbackURI = pageUrl.origin + pageUrl.pathname;
     const hashedUrl = await getHash(url);
     const cached = await CACHE.get(hashedUrl);
 
     if (!cached.error) {
-      const page = cached.data;
-      contents = renderHtml(url, page.title, page.content, page.timestamp);
+      const { title, content, timestamp } = cached.data;
+      contents = renderHtml(url, title, content, timestamp);
     } else {
-      // catch doesn't exist or inaccesible; fetch document;
+      const pageUrl = new URL(url);
+      const fallbackURI = pageUrl.origin + pageUrl.pathname;
+
       try {
         const { data: pageContent, error } = await fetchDocument(url);
         if (error) throw error;
@@ -39,9 +39,11 @@ app.get('*', async (req) => {
 
         const reader = new Readability(doc, { fallbackURI });
         const parsed = reader.parse();
+        const title = parsed!.title as string;
+        const content = parsed!.content as string;
 
-        contents = renderHtml(url, parsed!.title, parsed!.content);
-        CACHE.set(hashedUrl, parsed!.title, parsed!.content);
+        contents = renderHtml(url, title, content);
+        CACHE.set(hashedUrl, title, content);
       } catch (e) {
         console.error(e);
         status = 500;
